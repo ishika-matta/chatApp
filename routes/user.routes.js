@@ -3,8 +3,13 @@ const router=express.Router();
 const user=require('../controllers/user.controller');
 
 router.post('/register',user.registerController);
+router.post('/login',user.loginController);
+router.post('/resetPassword',user.resetPasswordController);
+router.post('/forgotPassword',user.forgotPasswordController);
 
 module.exports=router;
+
+//const {check, validationResult} = require('express-validator/check');
 
 
 

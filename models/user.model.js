@@ -1,21 +1,33 @@
 const mongoose = require('mongoose');
+const bcrypt=require('bcrypt');
+const jwt=require('jsonwebtoken');
+const db=require('../config/database.config');
+const nodeMailer=require('nodemailer');
 
 const userSchema = mongoose.Schema({
     firstName: {
         type:String,
-        required:true
+        //required:true
     },
     lastName: {
         type:String,
-        required:true
+        //required:true
     },
     email: {
         type:String,
-        required:true
+        required:true,
+        unique:true
     },
     password: {
         type:String,
         required:true
+    },
+    confirmPassword: {
+        type:String,
+     
+     },
+    token:{
+        type:String,
     },
     saltSecret:String
 },
@@ -23,8 +35,10 @@ const userSchema = mongoose.Schema({
     timestamps: true
 });
 
+
+
 userSchema.pre('save',function(next){
-    const bcrypt=require('bcrypt');
+    //const bcrypt=require('bcrypt');
     bcrypt.genSalt(10,(err,salt)=>{
         bcrypt.hash(this.password,salt,(err,hash)=>{
             this.password=hash;
@@ -33,9 +47,16 @@ userSchema.pre('save',function(next){
         });
     });
 });
-
-
-
+userSchema.pre('save',function(next){
+    //const bcrypt=require('bcrypt');
+    bcrypt.genSalt(10,(err,salt)=>{
+        bcrypt.hash(this.confirmPassword,salt,(err,hash)=>{
+            this.confirmPassword=hash;
+            this.saltSecret=salt;
+            next();
+        });
+    });
+});
 
 
 let userCollection = mongoose.model('User', userSchema);
@@ -53,7 +74,7 @@ class userModel {
         })
         var reg = user.save((err, result) => {
         if (err) 
-        callback(err);
+        callback({message:"devdvd"});
         
          else {
         console.log("user registration done");
@@ -61,8 +82,137 @@ class userModel {
         }
         })
         return reg;
+    }
+
+
+        login(userData,callback){
+            const bycrpt=require('bcrypt');
+            userCollection.findOne({email:userData.email},function(err,res){
+                if(err){
+                callback(err);
+                console.log("error ....92");
+                }
+                 else if (!res) 
+                    callback({message:"this email is not registered"});
+                  
+                else{
+                    bycrpt.compare(userData.password,res.password,function(err,result){
+                        if(result === true) {
+                            console.log(".......116");
+                            res.loginToken=jwt.sign({_id:res._id,name:res.firstName,email:res.email},db.JWT_SECRET,{ expiresIn: '10m'});
+                        callback(null, res);
+                       
+
+                        }
+                           else 
+                            callback({message:"password did not match"});
+ 
+                    });
+                }
+            })               
+    }
+
+    resetPassword(userData,callback){
+        const bcrypt=require('bcrypt');
+        
+        userCollection.findOne({email:userData.email},function(err,res){
+            if(err){
+            callback(err);
+            console.log("error ....127");
+            }
+            else if (!res) 
+            callback({message:"this email is not registered"});
+            else{
+
+        const user=new userCollection({
+            email: userData.email,
+            password: userData.password,
+            confirmPassword: userData.confirmPassword
+        })
+        console.log(user.confirmPassword+"   "+user.password);
+        if(user.password!=user.confirmPassword){
+            console.log("didnt match ....141");
+        callback({message:"password did not match"});}
+        else{
+            var reset = user.save((err, result) => {
+                if(err){
+                    callback(err);
+                }
+                else{       
+                console.log("reset password done....146");
+                callback(null, result);}});
+                return reset;    
+    }
+}
+})
+}
+
+
+forgotPassword(userData,callback){
+    userCollection.findOne({email:userData.email},function(err,res){
+        if(err){
+        callback(err);
+        console.log("error inside forgot password....170");
         }
+         else if (!res) 
+            callback({message:"this email is not registered"});
+            else{
+                //here for sending emails
+                res.forgotPasswordToken=jwt.sign({_id:res._id,name:res.firstName,email:res.email},db.JWT_SECRET,{ expiresIn: '5m'});
+                //console.log(res.forgotPasswordToken);
+                console.log("user registered here at line 163.......");
+                var forgotPasswordToken= res.forgotPasswordToken;
+                var transporter=nodeMailer.createTransport({
+                    service: "Gmail",
+                    auth: {
+                      user: "tommoddy1107@gmail.com",
+                      pass: 'bridgelabs'
+                    }
+                });
+
+                var mailOptions = {
+                    from: "indrajeettestemail@gmail.com",
+                    to: userData.email, 
+                    subject: 'reset password', 
+                    text: 'click the link to reset the password http://localhost:5000/resetPassword '+forgotPasswordToken, 
+
+                };
+                
+                
+                transporter.sendMail(mailOptions, function(err, info){
+                    if(err){
+                        callback(null,err);
+                    }
+                    console.log('Mail sent:' );
+                });
+
+            }
+          
+
+})
+}
+}
+
+     
+ 
         
 
-}
+
+   
+        //         (err,user)=>{
+        //             if(err)
+        //             return done(err);
+        //             //else if(!user)
+        //             //return done(null,false,{message:'Email is  not registered'});
+        //             else if(!user.verifyPassword(password))
+        //             return done(null,false,{message:'Wrong password'});
+        //             else
+        //             return done(null,password);
+    
+        //         })
+
+        // }
+        
+
+
 module.exports = new userModel(); 

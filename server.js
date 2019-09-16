@@ -1,20 +1,31 @@
+//require('./config/passport.config');
+
+
+const nodeMailer=require('nodemailer');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors=require('cors');
 const expressValidator = require('express-validator');
+const validator = require("email-validator");
 //const expressSession = require('express-session');
 const bcrypt = require('bcrypt');
+//const passport=require('./config/passport.config');
+const passport=require('passport');
 // create express app
 const app = express();
-app.use('',expressValidator);
+
+
 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }))
 
 // parse requests of content-type - application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json());
+app.use(passport.initialize());
+app.use(expressValidator());
+//app.use(validator());
 app.use(cors());
-//app.use('/api',routerIndex);
+
 
 // Configuring the database
 const dbConfig = require('./config/database.config.js');
