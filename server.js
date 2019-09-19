@@ -10,7 +10,7 @@ const validator = require("email-validator");
 //const expressSession = require('express-session');
 const bcrypt = require('bcrypt');
 //const passport=require('./config/passport.config');
-const passport=require('passport');
+//const passport=require('passport');
 // create express app
 const app = express();
 
@@ -21,11 +21,11 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 // parse requests of content-type - application/json
 app.use(bodyParser.json());
-app.use(passport.initialize());
+//app.use(passport.initialize());
 app.use(expressValidator());
 //app.use(validator());
-app.use(cors());
-
+//app.use(cors());
+app.use(express.static('../frontEnd'));
 
 // Configuring the database
 const dbConfig = require('./config/database.config.js');

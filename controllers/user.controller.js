@@ -1,141 +1,141 @@
 const userService = require('../services/user.services');
 const expressValidator = require('express-validator');
 const validator = require("email-validator");
-const passport=require('passport');
+const passport = require('passport');
 
-exports.registerController = (req , res) => {
- let responseResult={};
+exports.registerController = (req, res) => {
+  let responseResult = {};
 
- req.checkBody("firstName", 'first name is required').not().isEmpty();
- req.checkBody("lastName", 'last name is required').not().isEmpty();
+  req.checkBody("firstName", 'first name is required').not().isEmpty();
+  req.checkBody("lastName", 'last name is required').not().isEmpty();
 
-        //let email=req.body.email;
-       req.check("email",'valid email is required').isEmail();
-       /*req.check("email",'email is already in use').custom(email => {
-        if (alreadyHaveEmail(email)) {
-          throw new Error('Email already registered')
-        }
-      }),*/
+  //let email=req.body.email;
+  req.check("email", 'valid email is required').isEmail();
+  /*req.check("email",'email is already in use').custom(email => {
+   if (alreadyHaveEmail(email)) {
+     throw new Error('Email already registered')
+   }
+ }),*/
 
-        //let pass=req.body.password;
-        req.check("password",'password must be 5 characters long').isLength({min:5});
-        var error = req.validationErrors();
-        if(error){
-            responseResult.success = false;
-            responseResult.message = "validation error";
-           //responseResult.errors = error;
-           console.log(error);
-           return res.status(500).send(responseResult);
+  //let pass=req.body.password;
+  req.check("password", 'password must be 5 characters long').isLength({ min: 5 });
+  var error = req.validationErrors();
+  if (error) {
+    responseResult.success = false;
+    responseResult.message = "validation error";
+    //responseResult.errors = error;
+    console.log(error);
+    return res.status(400).send(responseResult);
 
-        }
-        else{
-            var userObj={
-                firstName:req.body.firstName,
-                lastName:req.body.lastName,
-                email:req.body.email,
-                password:req.body.password
+  }
+  else {
+    var userObj = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      password: req.body.password
 
-            }
-   userService.registerService(userObj , (err , result) => {
-
-        if(err){
-            responseResult.success = false;
-            responseResult.message = "registration error";
-             //responseResult.errors = err;
-           return res.status(400).send(responseResult); 
-
-        }
-    
-    else{
-            responseResult.success = true;
-            responseResult.result = result;
-            return res.status(200).send(responseResult); 
     }
-   })
-}
-}
+    userService.registerService(userObj, (err, result) => {
 
-exports.loginController = (req , res) => {
-  let responseResult={};
-    var userObj={
-        email:req.body.email,
-        password:req.body.password
-    }
-
-
-  userService.loginService(userObj , (err , result) => {
-
-    if(err){
+      if (err) {
         responseResult.success = false;
-        //responseResult.message = "invalid email id/password";
-         responseResult.errors = err;
-       return res.status(400).send(responseResult); 
+        responseResult.message = "registration error";
+        responseResult.errors = err;
+        return res.status(400).send(responseResult);
 
-    }
+      }
 
-else{
+      else {
         responseResult.success = true;
         responseResult.result = result;
-        responseResult.message = "verified.logged in";
-        return res.status(200).send(responseResult); 
-}
-})
-}
-
-exports.resetPasswordController = (req , res) => {
-  let responseResult={};
-    var userObj={
-        email:req.body.email,
-        password:req.body.password,
-        confirmPassword:req.body.confirmPassword
-    }
-
-
-  userService.resetPasswordService(userObj , (err , result) => {
-
-    if(err){
-        responseResult.success = false;
-        responseResult.message = "reset password not done";
-         responseResult.errors = err;
-       return res.status(400).send(responseResult); 
-
-    }
-
-else{
-        responseResult.success = true;
-        responseResult.result = result;
-        responseResult.message = "reset password done";
-        return res.status(200).send(responseResult); 
-}
-})
+        return res.status(201).send(responseResult);
+      }
+    })
+  }
 }
 
-exports.forgotPasswordController = (req , res) => {
-  let responseResult={};
-    var userObj={
-        email:req.body.email,
-    }
+exports.loginController = (req, res) => {
+  let responseResult = {};
+  var userObj = {
+    email: req.body.email,
+    password: req.body.password
+  }
 
 
-  userService.forgotPasswordService(userObj , (err , result) => {
+  userService.loginService(userObj, (err, result) => {
 
-    if(err){
-        responseResult.success = false;
-        responseResult.message = "forgot password mail sent";
-         responseResult.errors = err;
-       return res.status(400).send(responseResult); 
+    if (err) {
+      responseResult.success = false;
+      //responseResult.message = "invalid email id/password";
+      responseResult.errors = err;
+      return res.status(400).send(responseResult);
 
     }
 
-else{
-        responseResult.success = true;
-        responseResult.result = result;
-        responseResult.message = "forgot password mail sent";
-        return res.status(200).send(responseResult); 
+    else {
+      responseResult.success = true;
+      responseResult.result = result;
+      responseResult.message = "verified.logged in";
+      return res.status(200).send(responseResult);
+    }
+  })
 }
-})
+
+exports.resetPasswordController = (req, res) => {
+  let responseResult = {};
+  var userObj = {
+    email: req.body.email,
+    password: req.body.password,
+    confirmPassword: req.body.confirmPassword
+  }
+
+
+  userService.resetPasswordService(userObj, (err, result) => {
+
+    if (err) {
+      responseResult.success = false;
+      responseResult.message = "reset password not done";
+      responseResult.errors = err;
+      return res.status(400).send(responseResult);
+
+    }
+
+    else {
+      responseResult.success = true;
+      responseResult.result = result;
+      responseResult.message = "reset password done";
+      return res.status(200).send(responseResult);
+    }
+  })
 }
-  
+
+exports.forgotPasswordController = (req, res) => {
+  let responseResult = {};
+  var userObj = {
+    email: req.body.email,
+  }
+
+
+  userService.forgotPasswordService(userObj, (err, result) => {
+
+    if (err) {
+      responseResult.success = false;
+      responseResult.message = "forgot password mail sent";
+      responseResult.errors = err;
+      return res.status(400).send(responseResult);
+
+    }
+
+    else {
+      responseResult.success = true;
+      responseResult.result = result;
+      responseResult.message = "forgot password mail sent";
+      return res.status(200).send(responseResult);
+    }
+  })
+}
+
 
 
 
@@ -151,10 +151,10 @@ else{
   })(req,res);
 }*/
 
-    
-    
-    
-    
+
+
+
+
 
 
 
