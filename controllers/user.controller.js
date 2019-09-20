@@ -85,10 +85,12 @@ exports.loginController = (req, res) => {
 exports.resetPasswordController = (req, res) => {
   let responseResult = {};
   var userObj = {
-    email: req.body.email,
+    email:req.user.email,
+    token: req.headers.token,
     password: req.body.password,
     confirmPassword: req.body.confirmPassword
   }
+  console.log(userObj.email);
 
 
   userService.resetPasswordService(userObj, (err, result) => {

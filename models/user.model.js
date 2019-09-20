@@ -28,6 +28,7 @@ const userSchema = mongoose.Schema({
     },
     token: {
         type: String,
+        default: null
     },
     saltSecret: String
 },
@@ -38,7 +39,7 @@ const userSchema = mongoose.Schema({
 
 
 userSchema.pre('save', function (next) {
-    //const bcrypt=require('bcrypt');
+    const bcrypt = require('bcrypt');
     bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(this.password, salt, (err, hash) => {
             this.password = hash;
@@ -47,21 +48,19 @@ userSchema.pre('save', function (next) {
         });
     });
 });
-userSchema.pre('save', function (next) {
-    //const bcrypt=require('bcrypt');
-    bcrypt.genSalt(10, (err, salt) => {
-        bcrypt.hash(this.confirmPassword, salt, (err, hash) => {
-            this.confirmPassword = hash;
-            this.saltSecret = salt;
-            next();
-        });
-    });
-});
+
 
 
 let userCollection = mongoose.model('User', userSchema);
 
 class userModel {
+    hash(password) {
+        var salt = bcrypt.genSaltSync(10);
+        var hash = bcrypt.hashSync(password, salt);
+        return hash;
+
+
+    }
 
     register(body, callback) {
 
@@ -92,7 +91,7 @@ class userModel {
                 callback(err);
                 console.log("error ....92");
             }
-            else if (!res){
+            else if (!res) {
                 console.log("this email is not registered");
                 callback({ message: "this email is not registered" });
             }
@@ -102,19 +101,19 @@ class userModel {
                     if (result === true) {
                         console.log(".......116");
                         var loginToken = jwt.sign({ _id: res._id, name: res.firstName, email: res.email }, db.JWT_SECRET, { expiresIn: '2s' });
-                        
+
                         /*res.updateOne({token:loginToken },(err, res0)=>{
                             if (err) 
                                 callback(err);
                                 else
                                 callback(null, res0);
                          })*/
-                        
+
                         callback(null, res);
 
 
                     }
-                    else{
+                    else {
                         console.log("password did not match");
                         callback({ message: "password did not match" });
                     }
@@ -123,94 +122,86 @@ class userModel {
             }
         })
     }
-
-    resetPassword(userData, callback) {
-        //const bcrypt=require('bcrypt');
-
-        /*userCollection.findOne({ email: userData.email }, function (err, res) {
-            if (err) {
-                callback(err);
-                console.log("error ....127");
-            }
-            else if (!res)
-                callback({ message: "this email is not registered" });
-            else {
-                */
-
-                const user = new userCollection({
-                   // email: userData.email,
-                    password: userData.password,
-                    confirmPassword: userData.confirmPassword
-                })
-                console.log(user.confirmPassword + "   " + user.password);
-                if (user.password != user.confirmPassword) {
-                    console.log("didnt match ....141");
-                    callback({ message: "password did not match" });
-                }
-                else {
-                    var reset = user.save((err, result) => {
-                        if (err) {
-                            callback(err);
-                        }
-                        else {
-                            console.log("reset password done....146");
-                            callback(null, result);
-                        }
-                    });
-                    return reset;
-                }
-            }
-        //})
-    
-
-
     forgotPassword(userData, callback) {
         userCollection.findOne({ email: userData.email }, function (err, res) {
             if (err) {
                 callback(err);
                 console.log("error inside forgot password....155");
             }
-            else if (!res){
+            else if (!res) {
                 console.log("this email is not registered");
                 callback({ message: "this email is not registered" });
             }
             else {
                 //here for sending emails
-                var forgotPasswordToken = jwt.sign({ _id: res._id, email: res.email }, db.JWT_SECRET, { expiresIn: '5m' });
-                res.update({email:userData.email},{token:forgotPasswordToken },(err, res0)=>{
-                            if (err) 
-                                callback(err);
-                                else
-                                callback(null, res0);
-                         })
-                console.log("user registered here at line 167.......");
-                var transporter = nodeMailer.createTransport({
-                    service: "Gmail",
-                    auth: {
-                        user: "tommoody1107@gmail.com",
-                        pass: 'bridgelabs'
+                var forgotPasswordToken = jwt.sign({  email: res.email }, db.JWT_SECRET, { expiresIn: '5d' });
+
+                userCollection.updateOne({ email: userData.email }, { token: forgotPasswordToken }, (err, res0) => {
+                    if (err)
+                        callback(err);
+                    else {
+                        //callback(null, res0);
+                        console.log("user registered here at line 189.......");
+                        var transporter = nodeMailer.createTransport({
+                            service: "Gmail",
+                            auth: {
+                                user: "tommoody1107@gmail.com",
+                                pass: 'bridgelabs'
+                            }
+                        });
+
+                        var mailOptions = {
+                            from: "tommoody1107@gmail.com",
+                            to: userData.email,
+                            subject: 'reset password',
+                            text: 'click the link to reset the password http://localhost:5000/resetPassword' + forgotPasswordToken,
+
+                        };
+                        transporter.sendMail(mailOptions, function (err, info) {
+                            if (err) {
+                                callback(null, err);
+                            }
+                            console.log('Mail sent:');
+                        });
+
                     }
                 });
-
-                var mailOptions = {
-                    from: "tommoody1107@gmail.com",
-                    to: userData.email,
-                    subject: 'reset password',
-                    text: 'click the link to reset the password http://localhost:5000/resetPassword ' + forgotPasswordToken,
-
-                };
-
-
-                transporter.sendMail(mailOptions, function (err, info) {
-                    if (err) {
-                        callback(null, err);
-                    }
-                    console.log('Mail sent:');
-                });
-
             }
+        });
+    }
 
+    resetPassword(userData, callback) {
+        
+        const bycrpt = require('bcrypt');
+        userCollection.findOne({ email: userData.email }, (err, res) => {
+            if (err) {
+                callback(err);
+            }
+            else {
+                if (res.token === userData.token) {
+                    if (userData.password == userData.confirmPassword) {
+                        userCollection.updateOne({ email: res.email }, { password: this.hash(userData.password) }, (err, info) => {
+                            if (err)
+                                callback(err)
+                            else {
+                                console.log("reset password done..187");
+                                callback(null, info);
+                            }
+                        })
+                    }
 
+                    else {
+                        console.log("result false ..passwords did not match.....");
+                        callback({message: "passwords did not match"});
+                    }
+                }
+                else {
+                    console.log("token did not match");
+                    callback(err);
+
+                }
+              
+            }
         })
     }
 }
