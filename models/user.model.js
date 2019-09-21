@@ -58,8 +58,6 @@ class userModel {
         var salt = bcrypt.genSaltSync(10);
         var hash = bcrypt.hashSync(password, salt);
         return hash;
-
-
     }
 
     register(body, callback) {
@@ -203,6 +201,27 @@ class userModel {
               
             }
         })
+    }
+
+    getUsers(userData,callback){
+        console.log("207..");
+            userCollection.find({},
+            ({ email: 1, _id: 0}))
+                
+        
+            .exec(function (err,data){
+            if(err)
+            callback(err)
+            else{
+                callback(null,data);
+                console.log("data retreived .....216");
+            }
+            
+            })
+            
+        
+        
+
     }
 }
 

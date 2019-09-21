@@ -138,6 +138,32 @@ exports.forgotPasswordController = (req, res) => {
   })
 }
 
+exports.getUsersController = (req, res) => {
+  let responseResult = {};
+  var userObj = {
+    email: req.body.email,
+  }
+  
+
+  userService.getUsersService(userObj, (err, result) => {
+
+    if (err) {
+      responseResult.success = false;
+      responseResult.message = "users are not retrieved";
+      responseResult.errors = err;
+      return res.status(400).send(responseResult);
+
+    }
+
+    else {
+      responseResult.success = true;
+      responseResult.result = result;
+      responseResult.message = "users are retrieved here";
+      return res.status(200).send(responseResult);
+    }
+  })
+}
+
 
 
 

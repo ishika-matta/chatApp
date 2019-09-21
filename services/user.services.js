@@ -40,6 +40,15 @@ exports.forgotPasswordService=(body, callback)=>{
         }
     })
 }
+exports.getUsersService = (body, callback)=>{
+    userModel.getUsers(body , (err , result) => {
+    if(err)
+        callback(err);
+    else{
+        callback(null ,result);
+    }
+})
+}
 
 
 
