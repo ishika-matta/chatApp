@@ -5,6 +5,17 @@ const nodeMailer=require('nodemailer');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors=require('cors');
+const app = express();
+var http = require('http').createServer(app);
+var io = require('socket.io')(http);
+
+io.on('connection', function(socket){
+    console.log('user connected');
+  });
+  
+  http.listen(4000, function(){
+    console.log('listening on 4000');
+  });
 const expressValidator = require('express-validator');
 const validator = require("email-validator");
 //const expressSession = require('express-session');
@@ -12,7 +23,7 @@ const bcrypt = require('bcrypt');
 //const passport=require('./config/passport.config');
 //const passport=require('passport');
 // create express app
-const app = express();
+
 
 
 

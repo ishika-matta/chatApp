@@ -48,6 +48,16 @@ userSchema.pre('save', function (next) {
         });
     });
 });
+userSchema.pre('save', function (next) {
+    const bcrypt = require('bcrypt');
+    bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(this.confirmPassword, salt, (err, hash) => {
+            this.confirmPassword = hash;
+            this.saltSecret = salt;
+            next();
+        });
+    });
+});
 
 
 
@@ -152,7 +162,7 @@ class userModel {
                             from: "tommoody1107@gmail.com",
                             to: userData.email,
                             subject: 'reset password',
-                            text: 'click the link to reset the password http://localhost:5000/resetPassword' + forgotPasswordToken,
+                            text: 'click the link to reset the password http://localhost:5000/#!/resetPassword/' + forgotPasswordToken,
 
                         };
                         transporter.sendMail(mailOptions, function (err, info) {
